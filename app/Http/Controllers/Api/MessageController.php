@@ -3,29 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Contact;
+use App\Models\Chat;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class ContactController extends Controller
+class MessageController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
-        $user = $request->user();
-        $contacts = Contact::user($user->id)->with('otherUser')->get();
-        $response = [
-            'status' => 'success',
-            'msg' => 'There are '.$contacts->count().' contact in total',
-            'errors' => null,
-            'content' => $contacts
-        ];
-        return response()->json($response, 200);
+        //
     }
 
     /**
@@ -47,7 +39,10 @@ class ContactController extends Controller
     public function store(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'email' => 'required'
+            'email' => 'required',
+            'content' => 'required',
+            'type' => 'required',
+            'status' => 'required'
         ]);
 
         if ($validate->fails()) {
@@ -61,10 +56,25 @@ class ContactController extends Controller
         } else {
             $user = $request->user();
             $otherUser = User::where('email', $request->email)->first();
-            $contact = Contact::updateOrCreate(
-                [ 'user_id' => $user->id, 'other_user_id' => $otherUser->id ],
-                [ 'accept' => true ]
-            );
+            $chatData = [
+                'type' => 'private'
+            ];
+            if (isset($request->grub_name)) {
+                $chatDesc = '';
+                if (isset($request->grub_desc)) {
+                    $chatDesc = $request->grub_desc;
+                }
+                $chatData = [
+                    'type' => 'grub',
+                    'name' => $request->grub_name,
+                    'desc' => $chatDesc
+                ];
+            }
+            if (empty($request->chat_id)) {
+                $chat = Chat::create($chatData);
+            } else {
+                $chat = Chat::find($request->chat_id);
+            }
             $response = [
                 'status' => 'success',
                 'msg' => 'Add successfully',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -82,7 +83,38 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $auth = $request->user();
+        if ($auth->id != $id) {
+            $response = [
+                'status' => 'failed',
+                'msg' => 'Update failed',
+                'errors' => 'Id is not the same as your auth',
+                'content' => null
+            ];
+            return response()->json($response, 401);
+        }
+        $user = User::find($auth->id);
+        if ($request->name) {
+            $user->name = $request->name;
+        }
+        if ($request->email) {
+            $user->email = $request->email;
+        }
+        if ($request->avatar) {
+            $user->avatar = $request->avatar;
+        }
+        if ($request->status) {
+            $user->status = $request->status;
+        }
+        $user->save();
+
+        $response = [
+            'status' => 'success',
+            'msg' => 'Update successfully',
+            'errors' => null,
+            'content' => $user
+        ];
+        return response()->json($response, 200);
     }
 
     /**

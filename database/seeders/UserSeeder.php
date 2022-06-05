@@ -33,5 +33,14 @@ class UserSeeder extends Seeder
             'phone' => '081234567890',
             'role_id' => 5
         ]);
+        User::create([
+            'email' => 'test1@gmail.com',
+            'name' => 'Test 1',
+            'password' => Hash::make('password'),
+            'status' => 'aktif',
+            'avatar' => 'https://avataaars.io',
+            'phone' => '081234567891',
+            'role_id' => 6
+        ]);
     }
 }

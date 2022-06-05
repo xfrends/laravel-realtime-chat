@@ -33,6 +33,10 @@ class AddProfileToUsersTable extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('avatar');
             $table->dropColumn('phone');
+            $table->dropColumn('about');
+            $table->dropForeign('users_role_id_foreign');
+            $table->dropColumn('role_id');
+            $table->dropColumn('deleted_at');
         });
     }
 }

@@ -21,10 +21,13 @@ Route::group(['prefix' => 'auth', 'middleware' => 'auth:sanctum'], function() {
     Route::get('profile', 'AuthController@profile');
 });
 Route::group(['middleware' => 'auth:sanctum'], function() {
-    Route::resource('users', 'UserController')->only([
-        'index', 'show'
+    Route::resource('user', 'UserController')->only([
+        'index', 'show', 'update'
     ]);
     Route::resource('contact', 'ContactController')->only([
         'index', 'store'
+    ]);
+    Route::resource('chat', 'ChatController')->only([
+        'index', 'show', 'store'
     ]);
 });
