@@ -18,7 +18,7 @@ class ContactController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $contacts = Contact::user($user->id)->with('otherUser')->get();
+        $contacts = Contact::user($user->id)->with('otherUser')->where('accept', true)->get();
         $response = [
             'status' => 'success',
             'msg' => 'There are '.$contacts->count().' contact in total',
@@ -69,7 +69,7 @@ class ContactController extends Controller
                 'status' => 'success',
                 'msg' => 'Add successfully',
                 'errors' => null,
-                'content' => $contact->with('otherUser')->first()
+                'content' => $contact
             ];
             return response()->json($response, 200);
         }
@@ -115,8 +115,16 @@ class ContactController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        //
+        $user = $request->user();
+        Contact::where('id', $id)->where('user_id', $user->id)->update(['accept' => false]);;
+        $response = [
+            'status' => 'success',
+            'msg' => 'Delete successfully',
+            'errors' => null,
+            'content' => null
+        ];
+        return response()->json($response, 200);
     }
 }

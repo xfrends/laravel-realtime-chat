@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Message extends Model
+class ChatUser extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -18,10 +18,7 @@ class Message extends Model
     protected $fillable = [
         'chat_id',
         'user_id',
-        'content',
-        'type',
-        'status',
-        'reply'
+        'pin',
     ];
 
     /**
@@ -31,11 +28,23 @@ class Message extends Model
      */
     protected $dates = ['deleted_at'];
 
-    public function chat() {
-        return $this->belongsTo(Chat::class, 'chat_id', 'id');
+    public function scopeUser($query, $user_id)
+    {
+        if ($user_id) {
+            return $query->where('user_id', $user_id);
+        }
+    }
+    public function scopeChat($query, $chat_id)
+    {
+        if ($chat_id) {
+            return $query->where('chat_id', $chat_id);
+        }
     }
 
     public function user() {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+    public function chat() {
+        return $this->belongsTo(Chat::class, 'chat_id', 'id');
     }
 }

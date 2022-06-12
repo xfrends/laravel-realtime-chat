@@ -25,9 +25,13 @@ Route::group(['middleware' => 'auth:sanctum'], function() {
         'index', 'show', 'update'
     ]);
     Route::resource('contact', 'ContactController')->only([
-        'index', 'store'
+        'index', 'store', 'destroy'
     ]);
     Route::resource('chat', 'ChatController')->only([
-        'index', 'show', 'store'
+        'index', 'show', 'store', 'destroy'
+    ]);
+    Route::post('chat-pin/{id}', 'ChatController@pin');
+    Route::resource('message', 'MessageController')->only([
+        'index', 'store'
     ]);
 });

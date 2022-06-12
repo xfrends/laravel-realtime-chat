@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Chat;
+use App\Models\ChatUser;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,9 +17,33 @@ class MessageController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $validate = Validator::make($request->all(), [
+            'chat_id' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+            $response = [
+                'status' => 'error',
+                'message' => 'Validation Error',
+                'errors' => $validate->errors(),
+                'content' => null
+            ];
+            return response()->json($response, 200);
+        } else {
+            $user = $request->user();
+            ChatUser::withTrashed()->where('chat_users.chat_id', $request->chat_id)->where('chat_users.user_id', '=', $user->id)->restore();
+            $to = User::select('users.name')->join('chat_users', 'chat_users.user_id', '=', 'users.id')->where('chat_users.chat_id', $request->chat_id)->where('chat_users.user_id', '!=', $user->id)->where('users.id', '!=', $user->id)->first();
+            $messages = Message::where('chat_id', $request->chat_id)->with('user')->orderByDesc('updated_at')->get();
+            $response = [
+                'status' => 'success',
+                'msg' => 'There are '.$messages->count().' messages in total',
+                'errors' => null,
+                'content' => ['message' => $messages, 'to' => $to]
+            ];
+            return response()->json($response, 200);
+        }
     }
 
     /**
@@ -39,7 +65,7 @@ class MessageController extends Controller
     public function store(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'email' => 'required',
+            'chat_id' => 'required',
             'content' => 'required',
             'type' => 'required',
             'status' => 'required'
@@ -55,31 +81,19 @@ class MessageController extends Controller
             return response()->json($response, 200);
         } else {
             $user = $request->user();
-            $otherUser = User::where('email', $request->email)->first();
-            $chatData = [
-                'type' => 'private'
-            ];
-            if (isset($request->grub_name)) {
-                $chatDesc = '';
-                if (isset($request->grub_desc)) {
-                    $chatDesc = $request->grub_desc;
-                }
-                $chatData = [
-                    'type' => 'grub',
-                    'name' => $request->grub_name,
-                    'desc' => $chatDesc
-                ];
-            }
-            if (empty($request->chat_id)) {
-                $chat = Chat::create($chatData);
-            } else {
-                $chat = Chat::find($request->chat_id);
-            }
+            $message = Message::create([
+                'user_id' => $user->id,
+                'chat_id' => $request->chat_id,
+                'content' => $request->content,
+                'type' => $request->type,
+                'status' => $request->status,
+                'reply' => $request->reply
+            ]);
             $response = [
                 'status' => 'success',
                 'msg' => 'Add successfully',
                 'errors' => null,
-                'content' => $contact->with('otherUser')->first()
+                'content' => $message
             ];
             return response()->json($response, 200);
         }

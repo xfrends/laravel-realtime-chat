@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Chat;
+use App\Models\ChatUser;
 use App\Models\Contact;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -20,12 +22,17 @@ class ChatController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $chats = DB::table('chats')->select('chats.id','chats.updated_at')->join('chat_users', 'chat_users.chat_id', '=', 'chats.id')->where('chats.type', 'private')->where('chat_users.user_id', $user->id)->orderByDesc('chats.updated_at')->get();
+        $chats = Chat::select('chats.id','chats.updated_at','chat_users.pin')->join('chat_users', 'chat_users.chat_id', '=', 'chats.id')->where('chats.type', 'private')->whereNull('chat_users.deleted_at')->where('chat_users.user_id', $user->id)->orderByDesc('chat_users.pin')->orderByDesc('chats.updated_at')->get();
         foreach ($chats as $chat) {
             $chatUser = User::select('users.name','users.email','users.avatar')->join('chat_users', 'chat_users.user_id', '=', 'users.id')->where('chat_users.chat_id', $chat->id)->where('chat_users.user_id', '!=', $user->id)->where('users.id', '!=', $user->id)->first();
             $chat->name = $chatUser->name;
             $chat->email = $chatUser->email;
             $chat->avatar = $chatUser->avatar;
+            $message = Message::where('chat_id', $chat->id)->orderByDesc('updated_at')->first();
+            if (isset($message)) {
+                $chat->lastMessages = $message->content;
+                $chat->updated_at = $message->updated_at;
+            }
         }
         $response = [
             'status' => 'success',
@@ -90,7 +97,7 @@ class ChatController extends Controller
                 'status' => 'success',
                 'msg' => 'Add successfully',
                 'errors' => null,
-                'content' => $chat->with('messages')->first()
+                'content' => $chat
             ];
             return response()->json($response, 200);
         }
@@ -146,8 +153,43 @@ class ChatController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        //
+        $user = $request->user();
+        ChatUser::where('chat_id', $id)->where('user_id', $user->id)->delete();
+        $response = [
+            'status' => 'success',
+            'msg' => 'Delete successfully',
+            'errors' => null,
+            'content' => null
+        ];
+        return response()->json($response, 200);
+    }
+
+    public function pin(Request $request, $id)
+    {
+        $validate = Validator::make($request->all(), [
+            'pin' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+            $response = [
+                'status' => 'error',
+                'message' => 'Validation Error',
+                'errors' => $validate->errors(),
+                'content' => null
+            ];
+            return response()->json($response, 200);
+        } else {
+            $user = $request->user();
+            DB::update('update chat_users set pin = ? where chat_id = ? and user_id = ?', [$request->pin, $id, $user->id]);
+            $response = [
+                'status' => 'success',
+                'msg' => 'Pin successfully',
+                'errors' => null,
+                'content' => null
+            ];
+            return response()->json($response, 200);
+        }
     }
 }
