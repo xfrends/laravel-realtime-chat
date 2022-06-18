@@ -23,22 +23,25 @@ class ChatController extends Controller
     {
         $user = $request->user();
         $chats = Chat::select('chats.id','chats.updated_at','chat_users.pin')->join('chat_users', 'chat_users.chat_id', '=', 'chats.id')->where('chats.type', 'private')->whereNull('chat_users.deleted_at')->where('chat_users.user_id', $user->id)->orderByDesc('chat_users.pin')->orderByDesc('chats.updated_at')->get();
+        $chatLists = [];
         foreach ($chats as $chat) {
             $chatUser = User::select('users.name','users.email','users.avatar')->join('chat_users', 'chat_users.user_id', '=', 'users.id')->where('chat_users.chat_id', $chat->id)->where('chat_users.user_id', '!=', $user->id)->where('users.id', '!=', $user->id)->first();
-            $chat->name = $chatUser->name;
-            $chat->email = $chatUser->email;
-            $chat->avatar = $chatUser->avatar;
-            $message = Message::where('chat_id', $chat->id)->orderByDesc('updated_at')->first();
-            if (isset($message)) {
-                $chat->lastMessages = $message->content;
-                $chat->updated_at = $message->updated_at;
+            if (isset($chatUser)) {
+                $chatUser->id = $chat->id;
+                $chatUser->pin = $chat->pin;
+                $message = Message::where('chat_id', $chat->id)->orderByDesc('updated_at')->first();
+                if (isset($message)) {
+                    $chatUser->lastMessages = $message->content;
+                    $chatUser->updated_at = $message->updated_at;
+                    array_push($chatLists, $chatUser);
+                }
             }
         }
         $response = [
             'status' => 'success',
-            'msg' => 'There are '.$chats->count().' chats in total',
+            'msg' => 'There are '.count($chatLists).' chats in total',
             'errors' => null,
-            'content' => $chats
+            'content' => $chatLists
         ];
         return response()->json($response, 200);
     }

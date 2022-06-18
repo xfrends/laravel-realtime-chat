@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -43,7 +44,22 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = User::create([
+            'email' => $request->email,
+            'name' => $request->name,
+            'password' => Hash::make($request->password),
+            'status' => 'aktif',
+            'avatar' => 'https://avataaars.io',
+            'phone' => $request->phone,
+            'role_id' => 7
+        ]);
+        $response = [
+            'status' => 'success',
+            'msg' => 'Update successfully',
+            'errors' => null,
+            'content' => $user
+        ];
+        return response()->json($response, 200);
     }
 
     /**
@@ -126,5 +142,45 @@ class UserController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function manage(Request $request, $id)
+    {
+        $auth = $request->user();
+        if ($auth->role_id > 3) {
+            $response = [
+                'status' => 'failed',
+                'msg' => 'Update failed',
+                'errors' => 'Only manager can update manage user',
+                'content' => null
+            ];
+            return response()->json($response, 401);
+        }
+
+        $user = User::find($id);
+        if ($request->name) {
+            $user->name = $request->name;
+        }
+        if ($request->email) {
+            $user->email = $request->email;
+        }
+        if ($request->avatar) {
+            $user->avatar = $request->avatar;
+        }
+        if ($request->status) {
+            $user->status = $request->status;
+        }
+        if ($request->role_id) {
+            $user->role_id = $request->role_id;
+        }
+        $user->save();
+
+        $response = [
+            'status' => 'success',
+            'msg' => 'Update successfully',
+            'errors' => null,
+            'content' => $user
+        ];
+        return response()->json($response, 200);
     }
 }

@@ -14,16 +14,18 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('user', 'UserController@store');
 Route::post('login', 'AuthController@login');
 Route::group(['prefix' => 'auth', 'middleware' => 'auth:sanctum'], function() {
     Route::post('logout', 'AuthController@logout');
     Route::post('logoutalldevice', 'AuthController@logoutAllDevice');
     Route::get('profile', 'AuthController@profile');
 });
-Route::group(['middleware' => 'auth:sanctum'], function() {
+Route::group(['middleware' => ['auth:sanctum','rolecheck']], function() {
     Route::resource('user', 'UserController')->only([
         'index', 'show', 'update'
     ]);
+    Route::put('user-manage/{id}', 'UserController@manage');
     Route::resource('contact', 'ContactController')->only([
         'index', 'store', 'destroy'
     ]);

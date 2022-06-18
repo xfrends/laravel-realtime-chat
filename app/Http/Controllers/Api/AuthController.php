@@ -40,6 +40,15 @@ class AuthController extends Controller
             }
 
             $user = User::where('email', $request->email)->first();
+            if ($user->role_id == 7) {
+                $response = [
+                    'status' => 'error',
+                    'msg' => 'Unathorized',
+                    'errors' => null,
+                    'content' => null,
+                ];
+                return response()->json($response, 401);
+            }
             if (! Hash::check($request->password, $user->password, [])) {
                 throw new \Exception('Error in Login');
             }
