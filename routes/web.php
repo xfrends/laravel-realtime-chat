@@ -14,5 +14,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect('https://frendi-realtime-chat.netlify.app/');
+    return redirect('https://chat.legotech.id/');
 });
