@@ -44,7 +44,7 @@ class Contact extends Model
     }
 
     public function otherUser() {
-        return $this->belongsTo(User::class, 'other_user_id', 'id');
+        return $this->belongsTo(User::class, 'other_user_id', 'id')->with('role');
     }
     public function chat() {
         return $this->belongsTo(Chat::class, 'chat_id', 'id');

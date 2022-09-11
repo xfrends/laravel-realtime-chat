@@ -16,6 +16,7 @@ class AuthController extends Controller
         $validate = Validator::make($request->all(), [
             'email' => 'required',
             'password' => 'required',
+            // 'fcmToken' => 'required',
         ]);
 
         if ($validate->fails()) {
@@ -49,9 +50,13 @@ class AuthController extends Controller
                 ];
                 return response()->json($response, 401);
             }
+
             if (! Hash::check($request->password, $user->password, [])) {
                 throw new \Exception('Error in Login');
             }
+
+            // $user->fcm_token = $request->fcmToken;
+            $user->save();
 
             $tokenResult = $user->createToken('token-auth')->plainTextToken;
             $response = [
@@ -62,6 +67,7 @@ class AuthController extends Controller
                     'status_code' => 200,
                     'access_token' => $tokenResult,
                     'token_type' => 'Bearer',
+                    'email' => $user->email,
                 ]
             ];
             return response()->json($response, 200);

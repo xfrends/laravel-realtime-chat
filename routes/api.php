@@ -33,6 +33,10 @@ Route::group(['middleware' => ['auth:sanctum','rolecheck']], function() {
         'index', 'show', 'store', 'destroy'
     ]);
     Route::post('chat-pin/{id}', 'ChatController@pin');
+    Route::resource('group', 'GroupController')->only([
+        'index', 'show', 'store', 'update', 'destroy'
+    ]);
+    Route::post('group-pin/{id}', 'GroupController@pin');
     Route::resource('message', 'MessageController')->only([
         'index', 'store'
     ]);

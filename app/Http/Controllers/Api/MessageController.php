@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewMessages;
 use App\Http\Controllers\Controller;
 use App\Models\Chat;
 use App\Models\ChatUser;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class MessageController extends Controller
@@ -89,6 +91,7 @@ class MessageController extends Controller
                 'status' => $request->status,
                 'reply' => $request->reply
             ]);
+            NewMessages::dispatch($request->chat_id, $user->name, $user->email, $request->content);
             $response = [
                 'status' => 'success',
                 'msg' => 'Add successfully',
